@@ -1,36 +1,47 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-
-// Try models in priority order — first available wins
-const MODEL_FALLBACKS = [
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
-  'gemini-2.0-flash-lite',
-  'gemini-2.0-flash',
+const apiKey = process.env.GROQ_API_KEY || '';
+const MODELS = [
+  'llama-3.3-70b-versatile',
+  'mixtral-8x7b-32768',
+  'llama-3.1-8b-instant'
 ];
 
-async function generateWithFallback(prompt) {
+async function generateWithFallback(messages, responseFormatJson = true) {
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY is not defined in .env.local');
+  }
+
   let lastError;
-  for (const modelName of MODEL_FALLBACKS) {
+  for (const model of MODELS) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      return result.response.text().trim();
-    } catch (err) {
-      const status = err?.status ?? err?.statusCode;
-      const isQuota = status === 429 || err?.message?.includes('429') || err?.message?.includes('quota');
-      const isNotFound = status === 404 || err?.message?.includes('404');
-      if (isQuota || isNotFound) {
-        console.warn(`Model ${modelName} unavailable (${status}), trying next...`);
-        lastError = err;
-        continue;
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.3,
+          response_format: responseFormatJson ? { type: 'json_object' } : undefined,
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Groq error (${res.status}): ${errText}`);
       }
-      throw err; // non-quota error — surface immediately
+
+      const data = await res.json();
+      return data.choices[0].message.content.trim();
+    } catch (err) {
+      console.warn(`Groq model ${model} failed, trying next fallback model...`);
+      lastError = err;
     }
   }
-  throw lastError ?? new Error('All models exhausted');
+  throw lastError ?? new Error('All Groq models failed');
 }
 
 export async function POST(request) {
@@ -40,9 +51,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
     }
 
-    const prompt = `You are an expert curriculum designer. Generate a comprehensive, structured learning roadmap for the topic: "${topic}".
-
-Return ONLY valid JSON with this exact structure (no markdown, no explanation):
+    const messages = [
+      {
+        role: 'system',
+        content: `You are an expert curriculum designer. Generate a comprehensive, structured learning roadmap for the specified topic.
+You must return valid JSON matching this schema:
 {
   "title": "Roadmap title",
   "description": "Brief 1-sentence description",
@@ -60,33 +73,35 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 }
 
 Rules:
-- Generate 10-15 nodes total
-- First node type must be "start"
-- Include at least 1 "project" node
-- Include at least 1 "advanced" node
-- Edges define prerequisites (source must be learned before target)
-- Node ids are strings "1", "2", etc.
-- Make it a realistic, logical learning progression
-- Labels must be concise (2-4 words max)
-- Return ONLY the JSON object, nothing else`;
+- Generate 10-15 nodes total.
+- First node type must be "start".
+- Include at least 1 "project" node.
+- Include at least 1 "advanced" node.
+- Edges define prerequisites (source must be learned before target).
+- Node ids are strings like "1", "2", etc.
+- Make it a realistic, logical learning progression.
+- Labels must be concise (2-4 words max).`
+      },
+      {
+        role: 'user',
+        content: `Create a learning roadmap for: "${topic}"`
+      }
+    ];
 
-    const text = await generateWithFallback(prompt);
+    const text = await generateWithFallback(messages, true);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Invalid AI response format');
+    if (!jsonMatch) {
+      throw new Error('Invalid response format: No JSON object found');
+    }
 
     const data = JSON.parse(jsonMatch[0]);
     return NextResponse.json(data);
   } catch (err) {
     console.error('Roadmap generation error:', err);
-    const isQuota = err?.message?.includes('429') || err?.message?.includes('quota');
     return NextResponse.json(
-      {
-        error: isQuota
-          ? 'API quota exceeded. Please wait a minute and try again, or upgrade your Gemini plan at https://ai.google.dev'
-          : (err.message || 'Failed to generate roadmap'),
-      },
-      { status: isQuota ? 429 : 500 }
+      { error: err.message || 'Failed to generate roadmap' },
+      { status: 500 }
     );
   }
 }

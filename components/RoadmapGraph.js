@@ -81,7 +81,16 @@ function layoutNodes(rawNodes, rawEdges) {
     const x = idx * (NODE_W + H_GAP) - totalWidth / 2 + NODE_W / 2;
     const y = lvl * (NODE_H + V_GAP);
 
-    return { ...n, position: { x, y }, type: 'custom' };
+    return {
+      id: n.id,
+      position: { x, y },
+      type: 'custom',
+      data: {
+        label: n.label,
+        description: n.description,
+        type: n.type
+      }
+    };
   });
 
   return { nodes: positioned, edges: rawEdges };
