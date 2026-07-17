@@ -9,9 +9,19 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@tsparticles/engine": "^4.3.2",
+    "@tsparticles/react": "^4.3.2",
+    "@tsparticles/slim": "^4.3.2",
+    "@xyflow/react": "^12.11.2",
+    "framer-motion": "^12.42.2",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.25.0",
     "next": "16.2.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-syntax-highlighter": "^16.1.1",
+    "tsparticles": "^4.3.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
