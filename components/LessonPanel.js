@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, BookOpen, Code2, Lightbulb, Zap, ChevronDown, ChevronUp,
-  Copy, Check, Sparkles, RefreshCw, Play, Send, ShieldAlert, Award
+  Copy, Check, Sparkles, RefreshCw, Play, Send, ShieldAlert, Award, MessageSquare
 } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -78,6 +78,13 @@ export default function LessonPanel({ node, topic, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Copilot Chat States
+  const [activeTab, setActiveTab] = useState('content'); // 'content' | 'copilot'
+  const [chatMessages, setChatMessages] = useState([]);
+  const [inputMsg, setInputMsg] = useState('');
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const chatEndRef = useRef(null);
+
   // Adaptive challenge states
   const [adaptiveActive, setAdaptiveActive] = useState(false);
   const [difficulty, setDifficulty] = useState('Easy'); // 'Easy' | 'Medium' | 'Hard' | 'Extreme'
@@ -87,6 +94,13 @@ export default function LessonPanel({ node, topic, onClose }) {
   const [review, setReview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showHint, setShowHint] = useState(false);
+
+  // Scroll chat list to bottom on message updates
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, sendingMsg]);
 
   useEffect(() => {
     if (!node) return;
@@ -98,6 +112,15 @@ export default function LessonPanel({ node, topic, onClose }) {
     setReview(null);
     setUserCode('');
     setShowHint(false);
+    setActiveTab('content');
+
+    // Reset Chat Messages with personalized greeting
+    setChatMessages([
+      {
+        role: 'assistant',
+        content: `Hi there! I am your AI Copilot. Ask me anything about "${node.data.label}". I can explain core concepts, outline bugs, write more examples, or clarify lessons for you!`
+      }
+    ]);
 
     fetch('/api/generate-lesson', {
       method: 'POST',
@@ -109,6 +132,42 @@ export default function LessonPanel({ node, topic, onClose }) {
       .catch(() => setError('Failed to load lesson. Please try again.'))
       .finally(() => setLoading(false));
   }, [node, topic]);
+
+  // Send message to Copilot API
+  const sendCopilotMsg = async (e) => {
+    e.preventDefault();
+    if (!inputMsg.trim() || sendingMsg) return;
+
+    const userMessage = { role: 'user', content: inputMsg.trim() };
+    const updatedMessages = [...chatMessages, userMessage];
+    
+    setChatMessages(updatedMessages);
+    setInputMsg('');
+    setSendingMsg(true);
+
+    try {
+      const res = await fetch('/api/copilot-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          lessonName: node.data.label,
+          chatHistory: updatedMessages
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+    } catch (err) {
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: `⚠️ Error: ${err.message || 'Failed to connect to Copilot API.'}` }
+      ]);
+    } finally {
+      setSendingMsg(false);
+    }
+  };
 
   // Fetch or generate adaptive challenge
   const fetchChallenge = async (selectedDifficulty) => {
@@ -190,17 +249,17 @@ export default function LessonPanel({ node, topic, onClose }) {
             transition={{ type: 'spring', stiffness: 280, damping: 30 }}
             style={{
               position: 'fixed', right: 0, top: 0, bottom: 0, width: '70%', zIndex: 50,
-              overflowY: 'auto', background: 'rgba(15,15,26,0.95)', backdropFilter: 'blur(24px)',
+              overflowY: 'hidden', background: 'rgba(15,15,26,0.95)', backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.1)',
               display: 'flex', flexDirection: 'column',
             }}
           >
             {/* Panel header */}
             <div style={{
-              position: 'sticky', top: 0, zIndex: 10,
               background: 'rgba(15,15,26,0.95)', backdropFilter: 'blur(24px)',
               borderBottom: '1px solid rgba(255,255,255,0.07)',
               padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+              flexShrink: 0
             }}>
               <div style={{ flex: 1, paddingRight: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -219,20 +278,56 @@ export default function LessonPanel({ node, topic, onClose }) {
               </motion.button>
             </div>
 
-            {/* Panel body */}
-            <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {loading && <LoadingOrb message="Generating your lesson..." />}
+            {/* Tabs */}
+            {lesson && !loading && (
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(15,15,26,0.95)', flexShrink: 0 }}>
+                <button
+                  onClick={() => setActiveTab('content')}
+                  style={{
+                    flex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '14px 0', fontSize: '0.85rem', fontWeight: 600,
+                    color: activeTab === 'content' ? P : 'var(--clr-muted)',
+                    borderBottom: `2px solid ${activeTab === 'content' ? P : 'transparent'}`,
+                    transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                  }}
+                >
+                  <BookOpen size={14} /> Lesson Content
+                </button>
+                <button
+                  onClick={() => setActiveTab('copilot')}
+                  style={{
+                    flex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '14px 0', fontSize: '0.85rem', fontWeight: 600,
+                    color: activeTab === 'copilot' ? P : 'var(--clr-muted)',
+                    borderBottom: `2px solid ${activeTab === 'copilot' ? P : 'transparent'}`,
+                    transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                  }}
+                >
+                  <MessageSquare size={14} /> Ask Copilot
+                </button>
+              </div>
+            )}
 
-              {error && !loading && (
-                <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
-                  <p style={{ color: '#F87171', marginBottom: 8 }}>{error}</p>
-                  <button onClick={() => { setError(null); setLoading(true); }}
-                    style={{ background: 'none', border: 'none', color: P, cursor: 'pointer', fontSize: '0.875rem' }}>Try again</button>
-                </div>
-              )}
+            {/* loading state */}
+            {loading && (
+              <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                <LoadingOrb message="Generating your lesson..." />
+              </div>
+            )}
 
-              {lesson && !loading && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+            {/* error state */}
+            {error && !loading && (
+              <div style={{ flex: 1, padding: '24px', overflowY: 'auto', textAlign: 'center', paddingTop: '3rem' }}>
+                <p style={{ color: '#F87171', marginBottom: 8 }}>{error}</p>
+                <button onClick={() => { setError(null); setLoading(true); }}
+                  style={{ background: 'none', border: 'none', color: P, cursor: 'pointer', fontSize: '0.875rem' }}>Try again</button>
+              </div>
+            )}
+
+            {/* TAB A: LESSON CONTENT */}
+            {activeTab === 'content' && lesson && !loading && (
+              <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
                   style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                   <Section title="Overview" icon={BookOpen} color="#F4B7E2" defaultOpen={true}>
@@ -436,8 +531,93 @@ export default function LessonPanel({ node, topic, onClose }) {
                     </Section>
                   )}
                 </motion.div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* TAB B: COPILOT CHAT SIDEBAR PANEL */}
+            {activeTab === 'copilot' && lesson && !loading && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)', padding: '20px 24px 24px', overflow: 'hidden' }}>
+                {/* Chat History List */}
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 4, paddingBottom: 10 }}>
+                  {chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                        width: '100%'
+                      }}
+                    >
+                      <div
+                        style={{
+                          maxWidth: '85%',
+                          background: msg.role === 'user' ? 'rgba(244,183,226,0.08)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${msg.role === 'user' ? 'rgba(244,183,226,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                          borderRadius: 16,
+                          padding: '12px 16px',
+                          color: '#ffffff',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.6,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          boxShadow: msg.role === 'user' ? '0 4px 15px rgba(244,183,226,0.05)' : 'none'
+                        }}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {sendingMsg && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                      <div style={{ padding: '8px 16px', color: 'var(--clr-muted)', fontSize: '0.8rem', display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <span>Copilot is writing</span>
+                        <span style={{ display: 'flex', gap: 3 }}>
+                          {[0, 1, 2].map(i => (
+                            <motion.span key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+                              style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: P, display: 'inline-block' }} />
+                          ))}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Input form */}
+                <form
+                  onSubmit={sendCopilotMsg}
+                  style={{
+                    display: 'flex', gap: 10, alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)',
+                    paddingTop: 12, flexShrink: 0
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={inputMsg}
+                    onChange={e => setInputMsg(e.target.value)}
+                    disabled={sendingMsg}
+                    placeholder={`Ask about "${node.data.label}"...`}
+                    style={{
+                      flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12, padding: '12px 16px', color: '#ffffff', fontSize: '0.85rem',
+                      fontFamily: 'Inter, sans-serif', outline: 'none'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendingMsg || !inputMsg.trim()}
+                    style={{
+                      background: P, color: BG, border: 'none', cursor: sendingMsg || !inputMsg.trim() ? 'not-allowed' : 'pointer',
+                      width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: sendingMsg || !inputMsg.trim() ? 0.5 : 1, transition: 'all 0.2s', flexShrink: 0
+                    }}
+                  >
+                    <Send size={15} />
+                  </button>
+                </form>
+              </div>
+            )}
+
           </motion.div>
         </>
       )}

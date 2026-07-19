@@ -12,6 +12,7 @@ import HowItWorks from '@/components/HowItWorks';
 import FeaturesGrid from '@/components/FeaturesGrid';
 import Footer from '@/components/Footer';
 import { ArrowRight, Sparkles, Zap, Brain } from 'lucide-react';
+import Magnetic from '@/components/Magnetic';
 
 gsap.registerPlugin(TextPlugin, ScrollTrigger);
 
@@ -65,7 +66,13 @@ export default function Home() {
   }, []);
 
   return (
-    <main style={{ backgroundColor: BG }} className="relative min-h-screen overflow-x-hidden">
+    <motion.main
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+      style={{ backgroundColor: BG }}
+      className="relative min-h-screen overflow-x-hidden"
+    >
       <ParticleBackground />
       <Navbar />
 
@@ -124,30 +131,34 @@ export default function Home() {
           </p>
 
           {/* CTAs */}
-          <div className="hero-cta opacity-0 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link href="/learn" id="start-learning-cta">
+          <div className="hero-cta opacity-0 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16" style={{ position: 'relative', zIndex: 20 }}>
+            <Magnetic tolerance={70} pull={0.35}>
+              <Link href="/learn" id="start-learning-cta" style={{ display: 'inline-block' }}>
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(244,183,226,0.45)' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="group flex items-center gap-3 rounded-2xl font-bold text-lg px-8 py-4 transition-all duration-300"
+                  style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', cursor: 'pointer', border: 'none' }}
+                >
+                  <Brain size={20} />
+                  Start Learning Free
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </Link>
+            </Magnetic>
+            <Magnetic tolerance={60} pull={0.4}>
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(244,183,226,0.45)' }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="group flex items-center gap-3 rounded-2xl font-bold text-lg px-8 py-4 transition-all duration-300"
-                style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif' }}
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                id="see-how-it-works-btn"
+                className="glass flex items-center gap-2 rounded-2xl font-medium text-lg px-8 py-4 transition-all duration-300"
+                style={{ color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}
               >
-                <Brain size={20} />
-                Start Learning Free
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                <Zap size={18} style={{ color: P }} />
+                See How It Works
               </motion.button>
-            </Link>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-              id="see-how-it-works-btn"
-              className="glass flex items-center gap-2 rounded-2xl font-medium text-lg px-8 py-4 transition-all duration-300"
-              style={{ color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)' }}
-            >
-              <Zap size={18} style={{ color: P }} />
-              See How It Works
-            </motion.button>
+            </Magnetic>
           </div>
 
           {/* Stats */}
@@ -180,6 +191,6 @@ export default function Home() {
       <HowItWorks />
       <FeaturesGrid />
       <Footer />
-    </main>
+    </motion.main>
   );
 }

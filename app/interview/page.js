@@ -9,6 +9,7 @@ import {
   Sparkles, ArrowLeft, ArrowRight, Brain, ShieldAlert, Award,
   CheckCircle2, XCircle, Code2, AlertTriangle, BookOpen, RefreshCw
 } from 'lucide-react';
+import Magnetic from '@/components/Magnetic';
 
 const P  = 'var(--clr-primary)';
 const BG = 'var(--clr-bg)';
@@ -108,7 +109,12 @@ export default function InterviewPage() {
   const progressPercent = questions.length ? ((currentIdx) / questions.length) * 100 : 0;
 
   return (
-    <main style={{ backgroundColor: BG, minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}>
+    <motion.main
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+      style={{ backgroundColor: BG, minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}
+    >
       <ParticleBackground />
       <Navbar />
 
@@ -143,17 +149,19 @@ export default function InterviewPage() {
                   }}
                   onKeyDown={e => e.key === 'Enter' && startInterview(lang)}
                 />
-                <button
-                  onClick={() => startInterview(lang)}
-                  disabled={!lang.trim()}
-                  style={{
-                    background: P, color: BG, border: 'none', cursor: lang.trim() ? 'pointer' : 'not-allowed',
-                    borderRadius: 14, padding: '0 24px', fontSize: '0.9rem', fontWeight: 700,
-                    fontFamily: 'Outfit, sans-serif', opacity: lang.trim() ? 1 : 0.5
-                  }}
-                >
-                  Start
-                </button>
+                <Magnetic tolerance={50} pull={0.35}>
+                  <button
+                    onClick={() => startInterview(lang)}
+                    disabled={!lang.trim()}
+                    style={{
+                      background: P, color: BG, border: 'none', cursor: lang.trim() ? 'pointer' : 'not-allowed',
+                      borderRadius: 14, padding: '14px 24px', fontSize: '0.9rem', fontWeight: 700,
+                      fontFamily: 'Outfit, sans-serif', opacity: lang.trim() ? 1 : 0.5
+                    }}
+                  >
+                    Start
+                  </button>
+                </Magnetic>
               </div>
 
               {/* Quick Picks */}
@@ -236,17 +244,19 @@ export default function InterviewPage() {
 
               {/* Triggers */}
               <div style={{ display: 'flex', gap: 12 }}>
-                <button
-                  onClick={handleNext}
-                  style={{
-                    flex: 1, background: P, color: BG, border: 'none', cursor: 'pointer',
-                    borderRadius: 12, padding: '14px', fontSize: '0.9rem', fontWeight: 700,
-                    fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                  }}
-                >
-                  {currentIdx < questions.length - 1 ? 'Next Question' : 'Submit Answers for Grading'}
-                  <ArrowRight size={16} />
-                </button>
+                <Magnetic tolerance={60} pull={0.4}>
+                  <button
+                    onClick={handleNext}
+                    style={{
+                      background: P, color: BG, border: 'none', cursor: 'pointer',
+                      borderRadius: 12, padding: '14px 28px', fontSize: '0.9rem', fontWeight: 700,
+                      fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                    }}
+                  >
+                    {currentIdx < questions.length - 1 ? 'Next Question' : 'Submit Answers for Grading'}
+                    <ArrowRight size={16} />
+                  </button>
+                </Magnetic>
                 <button
                   onClick={() => { setCurrentAnswer('Skipped Question.'); handleNext(); }}
                   style={{
@@ -353,16 +363,18 @@ export default function InterviewPage() {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 14, marginTop: '1.5rem' }}>
-                <button
-                  onClick={resetInterview}
-                  style={{
-                    flex: 1, background: P, color: BG, border: 'none', cursor: 'pointer',
-                    borderRadius: 14, padding: '14px', fontSize: '0.9rem', fontWeight: 700,
-                    fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                  }}
-                >
-                  <RefreshCw size={16} /> Try Another Mock Interview
-                </button>
+                <Magnetic tolerance={60} pull={0.4}>
+                  <button
+                    onClick={resetInterview}
+                    style={{
+                      background: P, color: BG, border: 'none', cursor: 'pointer',
+                      borderRadius: 14, padding: '14px 28px', fontSize: '0.9rem', fontWeight: 700,
+                      fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                    }}
+                  >
+                    <RefreshCw size={16} /> Try Another Mock Interview
+                  </button>
+                </Magnetic>
                 <button
                   onClick={() => window.location.href = '/learn'}
                   style={{
@@ -379,6 +391,6 @@ export default function InterviewPage() {
 
         </div>
       </div>
-    </main>
+    </motion.main>
   );
 }

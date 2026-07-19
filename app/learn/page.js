@@ -14,6 +14,7 @@ import {
   GitBranch, Sparkles, Info, Flame, EyeOff, Trophy,
   ArrowLeft, ArrowRight, Brain, Clock, HelpCircle, AlertCircle, Copy, Check
 } from 'lucide-react';
+import Magnetic from '@/components/Magnetic';
 
 const P  = 'var(--clr-primary)';
 const BG = 'var(--clr-bg)';
@@ -399,20 +400,22 @@ export default function LearnPage() {
                   <p style={{ color: 'var(--clr-muted)', fontSize: '0.925rem', marginBottom: '1.5rem', maxWidth: '32rem', margin: '0 auto 1.5rem' }}>
                     We can map these concepts into an interactive visual graph. Click below to generate step-by-step interactive lesson cards.
                   </p>
-                  <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(244,183,226,0.45)' }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={buildRoadmap}
-                    style={{
-                      background: P, color: BG, border: 'none', cursor: 'pointer',
-                      borderRadius: 16, padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
-                      fontFamily: 'Outfit, sans-serif', display: 'inline-flex', alignItems: 'center', gap: 10
-                    }}
-                  >
-                    <GitBranch size={18} />
-                    Build My Visual Roadmap
-                    <ArrowRight size={16} />
-                  </motion.button>
+                  <Magnetic tolerance={70} pull={0.4}>
+                    <motion.button
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(244,183,226,0.45)' }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={buildRoadmap}
+                      style={{
+                        background: P, color: BG, border: 'none', cursor: 'pointer',
+                        borderRadius: 16, padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                        fontFamily: 'Outfit, sans-serif', display: 'inline-flex', alignItems: 'center', gap: 10
+                      }}
+                    >
+                      <GitBranch size={18} />
+                      Build My Visual Roadmap
+                      <ArrowRight size={16} />
+                    </motion.button>
+                  </Magnetic>
                 </div>
 
               </motion.div>

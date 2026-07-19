@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Brain, Menu, X, Sparkles } from 'lucide-react';
+import Magnetic from '@/components/Magnetic';
 
 const P  = 'var(--clr-primary)';
 const BG = 'var(--clr-bg)';
@@ -55,20 +56,22 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group" id="navbar-logo" style={{ textDecoration: 'none' }}>
-            <motion.div
-              whileHover={{ rotate: 15, scale: 1.1 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-              className="flex items-center justify-center rounded-xl"
-              style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #F4B7E2, #C084FC)' }}
-            >
-              <Brain size={18} style={{ color: BG }} />
-            </motion.div>
-            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.25rem' }}>
-              <span style={{ color: '#ffffff' }}>FourHour</span>
-              <span className="gradient-text">.Learn</span>
-            </div>
-          </Link>
+          <Magnetic tolerance={50} pull={0.35}>
+            <Link href="/" className="flex items-center gap-2.5 group" id="navbar-logo" style={{ textDecoration: 'none' }}>
+              <motion.div
+                whileHover={{ rotate: 15, scale: 1.1 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="flex items-center justify-center rounded-xl"
+                style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #F4B7E2, #C084FC)' }}
+              >
+                <Brain size={18} style={{ color: BG }} />
+              </motion.div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.25rem' }}>
+                <span style={{ color: '#ffffff' }}>FourHour</span>
+                <span className="gradient-text">.Learn</span>
+              </div>
+            </Link>
+          </Magnetic>
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
@@ -87,16 +90,18 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/interview" id="navbar-start-btn">
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 0 25px rgba(244,183,226,0.35)' }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 rounded-xl transition-all"
-                style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', border: 'none', cursor: 'pointer' }}
-              >
-                <Sparkles size={14} /> Are you ready for Interview?
-              </motion.button>
-            </Link>
+            <Magnetic tolerance={70} pull={0.4}>
+              <Link href="/interview" id="navbar-start-btn" style={{ display: 'inline-block' }}>
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 25px rgba(244,183,226,0.35)' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 rounded-xl transition-all"
+                  style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', border: 'none', cursor: 'pointer' }}
+                >
+                  <Sparkles size={14} /> Are you ready for Interview?
+                </motion.button>
+              </Link>
+            </Magnetic>
           </div>
 
           {/* Mobile toggle */}
