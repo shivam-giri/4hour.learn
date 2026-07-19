@@ -8,8 +8,8 @@ const P  = 'var(--clr-primary)';
 const BG = 'var(--clr-bg)';
 
 const SUGGESTIONS = [
-  'Machine Learning', 'Web Development', 'Python for Data Science',
-  'System Design', 'React.js', 'Blockchain', 'DevOps & CI/CD', 'Cloud Computing',
+  'JavaScript','React.js','Vue.js','Python','Java','SEO','Machine Learning', 'Web Development', 'Python for Data Science',
+  'System Design', 'Blockchain', 'DevOps & CI/CD', 'Cloud Computing',
 ];
 
 export default function TopicInput({ onGenerate, isLoading }) {

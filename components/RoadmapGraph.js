@@ -34,52 +34,23 @@ const defaultEdgeOptions = {
 function layoutNodes(rawNodes, rawEdges) {
   if (!rawNodes.length) return { nodes: rawNodes, edges: rawEdges };
 
-  // Build adjacency for levels
-  const childMap = {};
-  const parentCount = {};
-  rawNodes.forEach((n) => { childMap[n.id] = []; parentCount[n.id] = 0; });
-  rawEdges.forEach((e) => {
-    childMap[e.source]?.push(e.target);
-    if (parentCount[e.target] !== undefined) parentCount[e.target]++;
-  });
+  const NODE_W = 180;
+  const NODE_H = 100;
+  const H_GAP = 50;
+  const V_GAP = 85;
+  const COLS = 4;
 
-  // BFS-based level assignment
-  const levels = {};
-  const roots = rawNodes.filter((n) => parentCount[n.id] === 0).map((n) => n.id);
-  const queue = roots.map((id) => ({ id, level: 0 }));
-  const visited = new Set();
+  const positioned = rawNodes.map((n, idx) => {
+    const row = Math.floor(idx / COLS);
+    const col = idx % COLS;
 
-  while (queue.length) {
-    const { id, level } = queue.shift();
-    if (visited.has(id)) continue;
-    visited.add(id);
-    levels[id] = level;
-    (childMap[id] || []).forEach((childId) => {
-      if (!visited.has(childId)) queue.push({ id: childId, level: level + 1 });
-    });
-  }
+    // Calculate row widths to center nodes per row
+    const totalInRow = Math.min(rawNodes.length - row * COLS, COLS);
+    const rowWidth = totalInRow * NODE_W + (totalInRow - 1) * H_GAP;
+    const startX = -rowWidth / 2 + NODE_W / 2;
 
-  // Group by level
-  const levelGroups = {};
-  rawNodes.forEach((n) => {
-    const lvl = levels[n.id] ?? 0;
-    if (!levelGroups[lvl]) levelGroups[lvl] = [];
-    levelGroups[lvl].push(n.id);
-  });
-
-  const NODE_W = 220;
-  const NODE_H = 120;
-  const H_GAP = 60;
-  const V_GAP = 80;
-
-  const positioned = rawNodes.map((n) => {
-    const lvl = levels[n.id] ?? 0;
-    const group = levelGroups[lvl] || [];
-    const idx = group.indexOf(n.id);
-    const total = group.length;
-    const totalWidth = total * NODE_W + (total - 1) * H_GAP;
-    const x = idx * (NODE_W + H_GAP) - totalWidth / 2 + NODE_W / 2;
-    const y = lvl * (NODE_H + V_GAP);
+    const x = startX + col * (NODE_W + H_GAP);
+    const y = row * (NODE_H + V_GAP);
 
     return {
       id: n.id,
@@ -143,6 +114,12 @@ export default function RoadmapGraph({ rawNodes = [], rawEdges = [], onNodeClick
         fitViewOptions={{ padding: 0.3 }}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
+        nodesDraggable={true}
+        panOnDrag={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        zoomOnDoubleClick={true}
+        preventScrolling={true}
       >
         <Background
           variant={BackgroundVariant.Dots}

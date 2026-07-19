@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import TopicInput from '@/components/TopicInput';
@@ -70,6 +70,29 @@ export default function LearnPage() {
   const [error, setError]                       = useState(null);
   const [selectedNode, setSelected]             = useState(null);
 
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedTopic = localStorage.getItem('learn_topic');
+      const savedStep = localStorage.getItem('learn_step');
+      const savedSummary = localStorage.getItem('learn_summary');
+      const savedRoadmap = localStorage.getItem('learn_roadmap');
+
+      if (savedTopic) setTopic(savedTopic);
+      if (savedStep) setStep(savedStep);
+      if (savedSummary) setSummaryData(JSON.parse(savedSummary));
+      if (savedRoadmap) setRoadmap(JSON.parse(savedRoadmap));
+    } catch (e) {
+      console.warn('Failed to restore learning session from localStorage:', e);
+    }
+  }, []);
+
+  // Helper to change step and sync to localStorage
+  const changeStep = (nextStep) => {
+    setStep(nextStep);
+    localStorage.setItem('learn_step', nextStep);
+  };
+
   const startLearning = useCallback(async (inputTopic) => {
     setLoadingSummary(true);
     setError(null);
@@ -79,6 +102,11 @@ export default function LearnPage() {
     setTopic(inputTopic);
     setStep('input');
 
+    // Clear previous roadmap storage
+    localStorage.removeItem('learn_roadmap');
+    localStorage.setItem('learn_topic', inputTopic);
+    localStorage.setItem('learn_step', 'input');
+
     try {
       const res = await fetch('/api/generate-summary', {
         method: 'POST',
@@ -87,8 +115,10 @@ export default function LearnPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      
       setSummaryData(data);
-      setStep('summary');
+      localStorage.setItem('learn_summary', JSON.stringify(data));
+      changeStep('summary');
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -107,14 +137,28 @@ export default function LearnPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
       setRoadmap(data);
-      setStep('roadmap');
+      localStorage.setItem('learn_roadmap', JSON.stringify(data));
+      changeStep('roadmap');
     } catch (err) {
       setError(err.message || 'Something went wrong while generating the roadmap.');
     } finally {
       setLoadingRoadmap(false);
     }
   }, [topic]);
+
+  const resetSession = () => {
+    localStorage.removeItem('learn_topic');
+    localStorage.removeItem('learn_step');
+    localStorage.removeItem('learn_summary');
+    localStorage.removeItem('learn_roadmap');
+    setTopic('');
+    setSummaryData(null);
+    setRoadmap(null);
+    setSelected(null);
+    setStep('input');
+  };
 
   return (
     <main style={{ backgroundColor: BG, minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}>
@@ -157,7 +201,7 @@ export default function LearnPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 16, padding: '1.5rem', textAlign: 'center', maxWidth: '42rem', margin: '2rem auto' }}>
                 <p style={{ color: '#F87171', fontWeight: 500, marginBottom: 8 }}>⚠️ {error}</p>
-                <button onClick={() => setStep('input')} style={{ background: 'none', border: 'none', color: P, cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline' }}>
+                <button onClick={resetSession} style={{ background: 'none', border: 'none', color: P, cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'underline' }}>
                   Go back and try again
                 </button>
               </motion.div>
@@ -172,7 +216,7 @@ export default function LearnPage() {
                 
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
-                  <button onClick={() => setStep('input')}
+                  <button onClick={resetSession}
                     style={{ background: 'none', border: 'none', color: 'var(--clr-muted)', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.9rem' }}
                     onMouseEnter={e => e.target.style.color = '#ffffff'}
                     onMouseLeave={e => e.target.style.color = 'var(--clr-muted)'}
@@ -314,7 +358,7 @@ export default function LearnPage() {
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {summaryData.nextProject.features?.map((feat, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.85rem', color: 'var(--clr-muted)' }}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.85rem', color: 'var(--clr-accent)' }}>
                               <span style={{ color: 'var(--clr-accent)', marginTop: 2 }}>⚡</span>
                               <span>{feat}</span>
                             </div>
@@ -391,8 +435,8 @@ export default function LearnPage() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 
                 {/* Back to Summary Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between', marginBottom: '1.5rem' }}>
-                  <button onClick={() => setStep('summary')}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                  <button onClick={() => changeStep('summary')}
                     style={{ background: 'none', border: 'none', color: 'var(--clr-muted)', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.9rem' }}
                     onMouseEnter={e => e.target.style.color = '#ffffff'}
                     onMouseLeave={e => e.target.style.color = 'var(--clr-muted)'}
@@ -405,7 +449,7 @@ export default function LearnPage() {
                 </div>
 
                 {/* Header */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifycontent: 'space-between', gap: '1rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.5rem', color: '#ffffff', margin: '0 0 4px' }}>{roadmap.title}</h2>
                     <p style={{ color: 'var(--clr-muted)', fontSize: '0.875rem', margin: 0 }}>{roadmap.description}</p>
@@ -419,7 +463,7 @@ export default function LearnPage() {
                 {/* Hint */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem', color: 'var(--clr-muted)', fontSize: '0.8rem' }}>
                   <Info size={12} style={{ color: P }} />
-                  Click any node to open its lesson. Drag to explore. Scroll to zoom.
+                  Click any node to open its interactive lesson card. Drag nodes/canvas to explore. Scroll to zoom.
                 </div>
 
                 {/* Graph */}

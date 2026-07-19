@@ -87,14 +87,14 @@ export default function Navbar() {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/learn" id="navbar-start-btn">
+            <Link href="/interview" id="navbar-start-btn">
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: '0 0 25px rgba(244,183,226,0.35)' }}
                 whileTap={{ scale: 0.97 }}
                 className="flex items-center gap-2 rounded-xl transition-all"
-                style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.875rem', padding: '10px 20px', border: 'none', cursor: 'pointer' }}
+                style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', border: 'none', cursor: 'pointer' }}
               >
-                <Sparkles size={14} /> Start Learning
+                <Sparkles size={14} /> Are you ready for Interview?
               </motion.button>
             </Link>
           </div>
@@ -125,9 +125,9 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/learn">
+            <Link href="/interview">
               <button style={{ width: '100%', backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', fontWeight: 700, padding: '12px', borderRadius: 12, border: 'none', cursor: 'pointer', marginTop: 8 }}>
-                Start Learning Free
+                Are you ready for Interview?
               </button>
             </Link>
           </motion.div>

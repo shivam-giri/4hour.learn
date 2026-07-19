@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, Code2, Lightbulb, Zap, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import {
+  X, BookOpen, Code2, Lightbulb, Zap, ChevronDown, ChevronUp,
+  Copy, Check, Sparkles, RefreshCw, Play, Send, ShieldAlert, Award
+} from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LoadingOrb from './LoadingOrb';
@@ -12,7 +15,11 @@ const BG = 'var(--clr-bg)';
 
 function CodeBlock({ code, language }) {
   const [copied, setCopied] = useState(false);
-  const copy = async () => { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   return (
     <div id="code-block" style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}>
       {/* Mac-style header */}
@@ -71,11 +78,30 @@ export default function LessonPanel({ node, topic, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Adaptive challenge states
+  const [adaptiveActive, setAdaptiveActive] = useState(false);
+  const [difficulty, setDifficulty] = useState('Easy'); // 'Easy' | 'Medium' | 'Hard' | 'Extreme'
+  const [challenge, setChallenge] = useState(null);
+  const [loadingChallenge, setLoadingChallenge] = useState(false);
+  const [userCode, setUserCode] = useState('');
+  const [review, setReview] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
   useEffect(() => {
     if (!node) return;
-    setLesson(null); setError(null); setLoading(true);
+    setLesson(null);
+    setError(null);
+    setLoading(true);
+    setAdaptiveActive(false);
+    setChallenge(null);
+    setReview(null);
+    setUserCode('');
+    setShowHint(false);
+
     fetch('/api/generate-lesson', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nodeLabel: node.data.label, nodeType: node.data.type, topic }),
     })
       .then(r => r.json())
@@ -83,6 +109,68 @@ export default function LessonPanel({ node, topic, onClose }) {
       .catch(() => setError('Failed to load lesson. Please try again.'))
       .finally(() => setLoading(false));
   }, [node, topic]);
+
+  // Fetch or generate adaptive challenge
+  const fetchChallenge = async (selectedDifficulty) => {
+    setLoadingChallenge(true);
+    setReview(null);
+    setShowHint(false);
+    try {
+      const res = await fetch('/api/adaptive-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          lessonName: node.data.label,
+          difficulty: selectedDifficulty,
+          action: 'generate'
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setChallenge(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingChallenge(false);
+    }
+  };
+
+  // Submit code for review
+  const submitSolution = async () => {
+    if (!userCode.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/adaptive-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          lessonName: node.data.label,
+          difficulty,
+          userCode,
+          action: 'submit'
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setReview(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDifficultyChange = (diff) => {
+    setDifficulty(diff);
+    fetchChallenge(diff);
+  };
+
+  const startSandbox = () => {
+    setAdaptiveActive(true);
+    fetchChallenge(difficulty);
+  };
 
   return (
     <AnimatePresence>
@@ -101,7 +189,7 @@ export default function LessonPanel({ node, topic, onClose }) {
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 280, damping: 30 }}
             style={{
-              position: 'fixed', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 520, zIndex: 50,
+              position: 'fixed', right: 0, top: 0, bottom: 0, width: '70%', zIndex: 50,
               overflowY: 'auto', background: 'rgba(15,15,26,0.95)', backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.1)',
               display: 'flex', flexDirection: 'column',
@@ -182,10 +270,168 @@ export default function LessonPanel({ node, topic, onClose }) {
                   )}
 
                   {lesson.exercise && (
-                    <Section title="Practice Exercise" icon={Zap} color="#34D399">
-                      <div style={{ marginTop: 12, background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 12, padding: '1rem' }}>
-                        <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.875rem', fontWeight: 500, marginBottom: 8 }}>🎯 Challenge:</p>
-                        <p style={{ color: 'var(--clr-muted)', fontSize: '0.875rem', lineHeight: 1.75, whiteSpace: 'pre-line', margin: 0 }}>{lesson.exercise}</p>
+                    <Section title="Adaptive Challenge Sandbox" icon={Sparkles} color="#34D399" defaultOpen={true}>
+                      <div style={{ marginTop: 12 }}>
+                        {!adaptiveActive ? (
+                          <div style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 12, padding: '1.25rem' }}>
+                            <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.875rem', fontWeight: 500, marginBottom: 8 }}>🎯 Recommended Lesson Exercise:</p>
+                            <p style={{ color: 'var(--clr-muted)', fontSize: '0.875rem', lineHeight: 1.7, whiteSpace: 'pre-line', margin: '0 0 1.25rem' }}>
+                              {lesson.exercise}
+                            </p>
+                            <button
+                              onClick={startSandbox}
+                              style={{
+                                width: '100%', background: 'linear-gradient(135deg, #34D399, #7DD3FC)', color: BG,
+                                border: 'none', cursor: 'pointer', borderRadius: 10, padding: '12px',
+                                fontSize: '0.875rem', fontWeight: 700, fontFamily: 'Outfit, sans-serif',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                              }}
+                            >
+                              <Sparkles size={16} /> Enter Adaptive AI Sandbox
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                            {/* Difficulty Selector */}
+                            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', padding: 4, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                              {['Easy', 'Medium', 'Hard', 'Extreme'].map((diff) => (
+                                <button
+                                  key={diff}
+                                  onClick={() => handleDifficultyChange(diff)}
+                                  style={{
+                                    flex: 1, background: difficulty === diff ? 'rgba(52,211,153,0.15)' : 'transparent',
+                                    border: 'none', color: difficulty === diff ? '#34D399' : 'var(--clr-muted)',
+                                    cursor: 'pointer', fontSize: '0.75rem', padding: '6px 0', borderRadius: 8,
+                                    fontWeight: difficulty === diff ? 700 : 500, transition: 'all 0.2s'
+                                  }}
+                                >
+                                  {diff}
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Challenge Description */}
+                            {loadingChallenge ? (
+                              <div style={{ padding: '2rem 0' }}><LoadingOrb message="Customizing AI challenge..." /></div>
+                            ) : challenge ? (
+                              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '1.25rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#34D399' }}>Task: {difficulty}</span>
+                                  <button onClick={() => fetchChallenge(difficulty)} style={{ background: 'none', border: 'none', color: 'var(--clr-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem' }}>
+                                    <RefreshCw size={12} /> Regenerate
+                                  </button>
+                                </div>
+                                <p style={{ color: '#ffffff', fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 10px', fontWeight: 500 }}>
+                                  {challenge.challenge}
+                                </p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                                  {challenge.requirements?.map((req, idx) => (
+                                    <div key={idx} style={{ display: 'flex', gap: 8, fontSize: '0.8rem', color: 'var(--clr-muted)', lineHeight: 1.4 }}>
+                                      <span style={{ color: '#34D399' }}>•</span>
+                                      <span>{req}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <button onClick={() => setShowHint(!showHint)} style={{ background: 'none', border: 'none', color: 'var(--clr-secondary)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>
+                                  {showHint ? 'Hide Hint' : 'Show Hint'}
+                                </button>
+                                {showHint && challenge.hint && (
+                                  <p style={{ margin: '8px 0 0', fontSize: '0.78rem', color: 'var(--clr-muted)', fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 8, borderLeft: '3px solid var(--clr-secondary)' }}>
+                                    💡 {challenge.hint}
+                                  </p>
+                                )}
+                              </div>
+                            ) : null}
+
+                            {/* Submission Review Area */}
+                            {review && (
+                              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '1.25rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                  {review.correctness === 'Correct' ? (
+                                    <div style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <Award size={12} /> {review.score}
+                                    </div>
+                                  ) : (
+                                    <div style={{ background: 'rgba(251,191,36,0.15)', color: '#FBBF24', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <ShieldAlert size={12} /> {review.score}
+                                    </div>
+                                  )}
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--clr-muted)' }}>AI Review Result</span>
+                                </div>
+                                <p style={{ color: 'var(--clr-muted)', fontSize: '0.8rem', lineHeight: 1.6, margin: '0 0 12px', whiteSpace: 'pre-line' }}>
+                                  {review.review}
+                                </p>
+
+                                {/* Recommended Next Challenge */}
+                                {review.nextChallenge && (
+                                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+                                    <p style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <Sparkles size={12} style={{ color: P }} /> Next Adapted Exercise:
+                                    </p>
+                                    <p style={{ color: 'var(--clr-muted)', fontSize: '0.8rem', lineHeight: 1.5, margin: '0 0 8px' }}>
+                                      {review.nextChallenge.challenge}
+                                    </p>
+                                    <button
+                                      onClick={() => {
+                                        setDifficulty(review.nextChallenge.difficulty || difficulty);
+                                        setChallenge(review.nextChallenge);
+                                        setReview(null);
+                                        setUserCode('');
+                                        setShowHint(false);
+                                      }}
+                                      style={{ background: P, color: BG, border: 'none', cursor: 'pointer', borderRadius: 8, padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700 }}
+                                    >
+                                      Accept Next Challenge
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* User Code Input Textarea */}
+                            {challenge && !loadingChallenge && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--clr-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <Code2 size={13} /> Write your solution code here:
+                                </label>
+                                <textarea
+                                  value={userCode}
+                                  onChange={e => setUserCode(e.target.value)}
+                                  placeholder={`// e.g. Write your solution here...`}
+                                  style={{
+                                    width: '100%', height: 160, background: '#0a0a12', color: '#ffffff',
+                                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 12,
+                                    fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem', outline: 'none',
+                                    resize: 'vertical'
+                                  }}
+                                />
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                  <button
+                                    onClick={submitSolution}
+                                    disabled={submitting || !userCode.trim()}
+                                    style={{
+                                      flex: 1, background: '#34D399', color: BG, border: 'none', cursor: submitting || !userCode.trim() ? 'not-allowed' : 'pointer',
+                                      borderRadius: 10, padding: '12px', fontSize: '0.85rem', fontWeight: 700,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: submitting || !userCode.trim() ? 0.5 : 1
+                                    }}
+                                  >
+                                    {submitting ? 'Submitting for AI review...' : 'Submit Code for AI Review'} <Send size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() => setAdaptiveActive(false)}
+                                    style={{
+                                      background: 'rgba(255,255,255,0.05)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer',
+                                      borderRadius: 10, padding: '0 16px', fontSize: '0.85rem'
+                                    }}
+                                  >
+                                    Back
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        )}
                       </div>
                     </Section>
                   )}
