@@ -120,7 +120,7 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25 }}
-            className="glass-strong rounded-2xl flex flex-col gap-4"
+            className="glass-strong rounded-2xl flex flex-col gap-4 backdrop-blur-xl"
             style={{ position: 'fixed', top: 72, left: 16, right: 16, zIndex: 40, padding: '1.5rem' }}
           >
             {NAV_LINKS.map(link => (

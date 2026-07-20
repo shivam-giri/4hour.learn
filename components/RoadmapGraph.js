@@ -34,11 +34,15 @@ const defaultEdgeOptions = {
 function layoutNodes(rawNodes, rawEdges) {
   if (!rawNodes.length) return { nodes: rawNodes, edges: rawEdges };
 
-  const NODE_W = 180;
-  const NODE_H = 100;
-  const H_GAP = 50;
-  const V_GAP = 85;
-  const COLS = 4;
+  // Detect mobile width if running in browser window context
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const isTablet = typeof window !== 'undefined' && window.innerWidth < 1024;
+
+  const NODE_W = isMobile ? 150 : 180;
+  const NODE_H = isMobile ? 90 : 100;
+  const H_GAP = isMobile ? 20 : 40;
+  const V_GAP = isMobile ? 60 : 80;
+  const COLS = isMobile ? 2 : isTablet ? 3 : 4;
 
   const positioned = rawNodes.map((n, idx) => {
     const row = Math.floor(idx / COLS);
@@ -98,7 +102,7 @@ export default function RoadmapGraph({ rawNodes = [], rawEdges = [], onNodeClick
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-full h-[600px] glass rounded-2xl overflow-hidden border border-white/[0.06]"
+      className="w-full h-[480px] sm:h-[600px] glass rounded-2xl overflow-hidden border border-white/[0.06]"
       id="roadmap-graph"
     >
       <ReactFlow

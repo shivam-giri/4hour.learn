@@ -131,13 +131,13 @@ export default function Home() {
           </p>
 
           {/* CTAs */}
-          <div className="hero-cta opacity-0 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16" style={{ position: 'relative', zIndex: 20 }}>
+          <div className="hero-cta opacity-0 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 w-full max-w-md sm:max-w-none mx-auto" style={{ position: 'relative', zIndex: 20 }}>
             <Magnetic tolerance={70} pull={0.35}>
-              <Link href="/learn" id="start-learning-cta" style={{ display: 'inline-block' }}>
+              <Link href="/learn" id="start-learning-cta" className="w-full sm:w-auto" style={{ display: 'inline-block' }}>
                 <motion.button
                   whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(244,183,226,0.45)' }}
                   whileTap={{ scale: 0.97 }}
-                  className="group flex items-center gap-3 rounded-2xl font-bold text-lg px-8 py-4 transition-all duration-300"
+                  className="group flex items-center justify-center gap-3 rounded-2xl font-bold text-lg px-8 py-4 transition-all duration-300 w-full sm:w-auto"
                   style={{ backgroundColor: P, color: BG, fontFamily: 'Outfit, sans-serif', cursor: 'pointer', border: 'none' }}
                 >
                   <Brain size={20} />
@@ -152,7 +152,7 @@ export default function Home() {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
                 id="see-how-it-works-btn"
-                className="glass flex items-center gap-2 rounded-2xl font-medium text-lg px-8 py-4 transition-all duration-300"
+                className="glass flex items-center justify-center gap-2 rounded-2xl font-medium text-lg px-8 py-4 transition-all duration-300 w-full sm:w-auto"
                 style={{ color: '#ffffff', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}
               >
                 <Zap size={18} style={{ color: P }} />

@@ -56,11 +56,12 @@ export default function TopicInput({ onGenerate, isLoading }) {
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 200)}
             disabled={isLoading}
-            placeholder="Enter any topic — e.g. 'Machine Learning', 'Web3', 'Piano'"
+            placeholder="Enter any topic (e.g. React.js, Python)..."
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: '#ffffff', fontSize: '1rem', padding: '18px 8px',
+              color: '#ffffff', fontSize: '0.925rem', padding: '16px 4px',
               fontFamily: 'Inter, sans-serif', opacity: isLoading ? 0.5 : 1,
+              width: '100%', minWidth: 0
             }}
           />
 

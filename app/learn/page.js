@@ -243,7 +243,7 @@ export default function LearnPage() {
                   
                   {/* Philosophy / Rule 1 */}
                   {summaryData.philosophy && (
-                    <div className="gradient-border" style={{ padding: '2rem' }}>
+                    <div className="gradient-border p-5 sm:p-8">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
                         <Flame size={20} style={{ color: P }} />
                         <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900, fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
@@ -320,7 +320,7 @@ export default function LearnPage() {
                   </div>
 
                   {/* Golden Exercise & Next Project */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                     
                     {/* The Golden Exercise */}
                     {summaryData.exercise && (

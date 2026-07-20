@@ -136,7 +136,7 @@ export default function InterviewPage() {
               </p>
 
               {/* Language Search */}
-              <div style={{ display: 'flex', gap: 10, maxWidth: '32rem', margin: '0 auto 2rem' }}>
+              <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto mb-8">
                 <input
                   type="text"
                   value={lang}
@@ -154,8 +154,9 @@ export default function InterviewPage() {
                     onClick={() => startInterview(lang)}
                     disabled={!lang.trim()}
                     style={{
+                      width: '100%',
                       background: P, color: BG, border: 'none', cursor: lang.trim() ? 'pointer' : 'not-allowed',
-                      borderRadius: 14, padding: '14px 24px', fontSize: '0.9rem', fontWeight: 700,
+                      borderRadius: 14, padding: '14px 28px', fontSize: '0.9rem', fontWeight: 700,
                       fontFamily: 'Outfit, sans-serif', opacity: lang.trim() ? 1 : 0.5
                     }}
                   >
@@ -362,11 +363,12 @@ export default function InterviewPage() {
               </div>
 
               {/* Action buttons */}
-              <div style={{ display: 'flex', gap: 14, marginTop: '1.5rem' }}>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <Magnetic tolerance={60} pull={0.4}>
                   <button
                     onClick={resetInterview}
                     style={{
+                      width: '100%',
                       background: P, color: BG, border: 'none', cursor: 'pointer',
                       borderRadius: 14, padding: '14px 28px', fontSize: '0.9rem', fontWeight: 700,
                       fontFamily: 'Outfit, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
@@ -378,8 +380,9 @@ export default function InterviewPage() {
                 <button
                   onClick={() => window.location.href = '/learn'}
                   style={{
+                    width: '100%',
                     background: 'rgba(255,255,255,0.04)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 14, padding: '0 24px', cursor: 'pointer', fontSize: '0.85rem'
+                    borderRadius: 14, padding: '14px 24px', cursor: 'pointer', fontSize: '0.85rem'
                   }}
                 >
                   Go to Roadmap Builder

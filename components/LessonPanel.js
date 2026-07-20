@@ -248,7 +248,7 @@ export default function LessonPanel({ node, topic, onClose }) {
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 280, damping: 30 }}
             style={{
-              position: 'fixed', right: 0, top: 0, bottom: 0, width: '70%', zIndex: 50,
+              position: 'fixed', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 540, zIndex: 50,
               overflowY: 'hidden', background: 'rgba(15,15,26,0.95)', backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.1)',
               display: 'flex', flexDirection: 'column',
